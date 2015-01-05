@@ -1,4 +1,3 @@
-var inherits = require("inherits");
 var Adapter = require("socket.io-adapter");
 
 module.exports = adapter;
@@ -6,13 +5,13 @@ module.exports = adapter;
 function adapter(option) {
 	var opt = option || {};
 
-	function Text(nsp) {
+	function Backlog(nsp) {
 		Adapter.call(this, nsp);
 		this.previousMessages = {};
 	}
-	inherits(Text, Adapter);
+	require('util').inherits(Backlog, Adapter);
 
-	Text.prototype.broadcast = function(packet, opts, forget) {
+	Backlog.prototype.broadcast = function(packet, opts, forget) {
 		var rooms = opts.rooms;
 		if (rooms && !forget) {
 			for (var i = 0 ; i < rooms.length; i++) {
@@ -25,7 +24,7 @@ function adapter(option) {
 		Adapter.prototype.broadcast.call(this, packet, opts);
 	};
 
-	Text.prototype.add = function(id, room, fn) {
+	Backlog.prototype.add = function(id, room, fn) {
 		var previousRoomMessages = this.previousMessages[room];
 		if (previousRoomMessages) {
 			var joinArgs = this.nsp.connected[id].joinArgs;
@@ -53,6 +52,6 @@ function adapter(option) {
 		}
 		Adapter.prototype.add.call(this, id, room, fn);
 	};
-	return Text;
+	return Backlog;
 }
 
