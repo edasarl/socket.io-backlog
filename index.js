@@ -4,10 +4,29 @@ module.exports = adapter;
 
 function adapter(option) {
 	var opt = option || {};
+	var peremption = opt.peremption || 24*3600*1000;
+	var length = opt.length || 100;
 
 	function Backlog(nsp) {
 		Adapter.call(this, nsp);
 		this.previousMessages = {};
+		var self = this;
+		function cleanOldMessages() {
+			var previousMessages = self.previousMessages;
+			var timeLimit = (new Date()).getTime() - peremption;
+			for(var room in previousMessages) {
+				var messages = previousMessages[room];
+				var recentMessages = [];
+				var nMessages = messages.length;
+				var iMin = Math.max(0, nMessages - length);
+				for (var i = iMin; i < nMessages; i++) {
+					var message = messages[i];
+					if (message.data[1].mtime > timeLimit) recentMessages.push(message);
+				};
+				previousMessages[room] = recentMessages;
+			}
+		}
+		setInterval(cleanOldMessages, peremption / 2);
 	}
 	require('util').inherits(Backlog, Adapter);
 
