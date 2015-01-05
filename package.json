@@ -10,7 +10,16 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "eda sarl",
+  "contributors": [
+    {
+      "name": "Manuel Baclet",
+      "email": "manuel@edagames.com"
+    },
+    {
+      "name": "Jérémy Lal",
+      "email": "kapouer@melix.org"
+    }
+  ],
   "license": "MIT",
   "dependencies": {
     "socket.io-adapter": "^0.3.1"
