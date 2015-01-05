@@ -62,7 +62,7 @@ function adapter(option) {
 						messagesAgregate.data[1].push(message.data[1]);
 					}
 				}
-				this.broadcast(messagesAgregate, {rooms: [id]}, true);
+				if (messagesAgregate.data[1].length) this.broadcast(messagesAgregate, {rooms: [id]}, true);
 			} else {
 				for (var i = 0 ; i < previousRoomMessages.length; i++) {
 					this.broadcast(previousRoomMessages[i], {rooms: [id]}, true);
