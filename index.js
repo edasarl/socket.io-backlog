@@ -4,7 +4,7 @@ module.exports = adapter;
 
 function adapter(option) {
 	var opt = option || {};
-	var peremption = opt.peremption || 24*3600*1000;
+	var peremption = opt.peremption || 24 * 3600 * 1000;
 	var length = opt.length || 100;
 
 	function Backlog(nsp) {
