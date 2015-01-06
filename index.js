@@ -96,7 +96,7 @@ function adapter(option) {
 			}
 		}
 
-		if (rooms.length && !forget) {
+		if (rooms.length && !forget && packet.data[1].mtime) {
 			for (var i = 0 ; i < rooms.length; i++) {
 				var room = rooms[i];
 				var previousRoomMessages = this.previousMessages[room];
@@ -133,34 +133,30 @@ function adapter(option) {
 			if (previousRoomMessages && joinArgs) {
 				var cachedValue = this.cache.get(room, joinArgs);
 				if (cachedValue) {
-					this.broadcast(cachedValue, {rooms: [id]}, true);
-				} else if (cachedValue !== null) {
-					var messagesAgregate = {
-						type: 2,
-						data: ['message', []],
-						nsp: this.nsp.name
-					};
-
-					for (var i = 0 ; i < previousRoomMessages.length; i++) {
+					for (var j = 0; j < cachedValue.length; j++) {
+						this.broadcast(cachedValue[j], {rooms: [id]}, true);
+					}
+				} else {
+					var messagesAgregate = [];
+					var self = this;
+					(function build(i) {
+						if (i == previousRoomMessages.length) {
+							self.cache.set(room, joinArgs, messagesAgregate);
+							for (var j = 0; j < messagesAgregate.length; j++) {
+								self.broadcast(messagesAgregate[j], {rooms: [id]}, true);
+							}
+							return;
+						}
 						var message = previousRoomMessages[i];
-						if (message.type != 2 || message.data[0] != 'message') {
-							console.log('Wrong message format. Type is', message.type, 'and event is', message.data[0]);
-							continue;
+						if (message.data[1].mtime > joinArgs) {
+							self.encoder.encode(message, function(encodedPackets) {
+								messagesAgregate.push(encodedPackets);
+								build(i+1);
+							});
+						} else {
+							build(i+1);
 						}
-						var content = message.data[1];
-						if (content.mtime && content.mtime > joinArgs) {
-							messagesAgregate.data[1].push(message.data[1]);
-						}
-					}
-					if (messagesAgregate.data[1].length) {
-						var self = this;
-						this.encoder.encode(messagesAgregate, function(encodedPackets) {
-							self.cache.set(room, joinArgs, encodedPackets);
-							self.broadcast(encodedPackets, {rooms: [id]}, true);
-						});
-					} else {
-						this.cache.set(room, joinArgs, null);
-					}
+					})(0);
 				}
 			}
 		}
