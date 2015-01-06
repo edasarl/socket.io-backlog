@@ -133,6 +133,10 @@ function adapter(option) {
 
 				for (var i = 0 ; i < previousRoomMessages.length; i++) {
 					var message = previousRoomMessages[i];
+					if (message.type != 2 || message.data[0] != 'message') {
+						console.log('Wrong message format. Type is', message.type, 'and event is', message.data[0]);
+						continue;
+					}
 					var content = message.data[1];
 					if (content.mtime && content.mtime > joinArgs) {
 						messagesAgregate.data[1].push(message.data[1]);
