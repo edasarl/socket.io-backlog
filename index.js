@@ -14,7 +14,7 @@ function adapter(option) {
 		function cleanOldMessages() {
 			var previousMessages = self.previousMessages;
 			var timeLimit = (new Date()).getTime() - peremption;
-			for(var room in previousMessages) {
+			for (var room in previousMessages) {
 				var messages = previousMessages[room];
 				var recentMessages = [];
 				var nMessages = messages.length;
