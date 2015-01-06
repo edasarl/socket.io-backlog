@@ -114,42 +114,53 @@ function adapter(option) {
 	};
 
 	Backlog.prototype.add = function(id, room, fn) {
-		var previousRoomMessages = this.previousMessages[room];
-		var joinArgs = null;
-		if (this.nsp.connected[id]) {
-			joinArgs = this.nsp.connected[id].joinArgs;
-			delete this.nsp.connected[id].joinArgs;
-		}
-		if (previousRoomMessages && joinArgs) {
-			var cachedValue = this.cache.get(room, joinArgs);
-			if (cachedValue) {
-				this.broadcast(cachedValue, {rooms: [id]}, true);
-			} else if (cachedValue !== null) {
-				var messagesAgregate = {
-					type: 2,
-					data: ['message', []],
-					nsp: this.nsp.name
-				};
+		if (id == room) {
+			var self = this;
+			setImmediate(function() {
+				var socket = self.nsp.connected[id];
+				socket.on('join', function(data) {
+					socket.joinArgs = data.mtime;
+					socket.join(data.room);
+				});
+			});
+		} else {
+			var previousRoomMessages = this.previousMessages[room];
+			var joinArgs = null;
+			if (this.nsp.connected[id]) {
+				joinArgs = this.nsp.connected[id].joinArgs;
+				delete this.nsp.connected[id].joinArgs;
+			}
+			if (previousRoomMessages && joinArgs) {
+				var cachedValue = this.cache.get(room, joinArgs);
+				if (cachedValue) {
+					this.broadcast(cachedValue, {rooms: [id]}, true);
+				} else if (cachedValue !== null) {
+					var messagesAgregate = {
+						type: 2,
+						data: ['message', []],
+						nsp: this.nsp.name
+					};
 
-				for (var i = 0 ; i < previousRoomMessages.length; i++) {
-					var message = previousRoomMessages[i];
-					if (message.type != 2 || message.data[0] != 'message') {
-						console.log('Wrong message format. Type is', message.type, 'and event is', message.data[0]);
-						continue;
+					for (var i = 0 ; i < previousRoomMessages.length; i++) {
+						var message = previousRoomMessages[i];
+						if (message.type != 2 || message.data[0] != 'message') {
+							console.log('Wrong message format. Type is', message.type, 'and event is', message.data[0]);
+							continue;
+						}
+						var content = message.data[1];
+						if (content.mtime && content.mtime > joinArgs) {
+							messagesAgregate.data[1].push(message.data[1]);
+						}
 					}
-					var content = message.data[1];
-					if (content.mtime && content.mtime > joinArgs) {
-						messagesAgregate.data[1].push(message.data[1]);
+					if (messagesAgregate.data[1].length) {
+						var self = this;
+						this.encoder.encode(messagesAgregate, function(encodedPackets) {
+							self.cache.set(room, joinArgs, encodedPackets);
+							self.broadcast(encodedPackets, {rooms: [id]}, true);
+						});
+					} else {
+						this.cache.set(room, joinArgs, null);
 					}
-				}
-				if (messagesAgregate.data[1].length) {
-					var self = this;
-					this.encoder.encode(messagesAgregate, function(encodedPackets) {
-						self.cache.set(room, joinArgs, encodedPackets);
-						self.broadcast(encodedPackets, {rooms: [id]}, true);
-					});
-				} else {
-					this.cache.set(room, joinArgs, null);
 				}
 			}
 		}

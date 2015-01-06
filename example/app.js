@@ -19,19 +19,14 @@ function createApp() {
 	}));
 	io.on("connection", function(socket) {
 		console.log('a user connected', socket.id);
-		socket.on('join', function(data) {
-			console.log('join', data);
-			if (data.mtime) socket.joinArgs = data.mtime;
-			socket.join(data.room);
-			socket.on("message", function(message) {
-				console.log(socket.id, 'message', message);
-				var now = new Date();
-				var completeMessage = {
-					text: message,
-					mtime: now.getTime()
-				};
-				io.to(data.room).emit('message', completeMessage);
-			});
+		socket.on("message", function(message) {
+			console.log(socket.id, 'message', message);
+			var now = new Date();
+			var completeMessage = {
+				text: message,
+				mtime: now.getTime()
+			};
+			io.to('messages').emit('message', completeMessage);
 		});
 		socket.on("disconnect", function() {
 			console.log("disconnect", socket.id);
