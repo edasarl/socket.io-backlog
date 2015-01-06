@@ -46,9 +46,12 @@ function adapter(option) {
 	Backlog.prototype.add = function(id, room, fn) {
 		var previousRoomMessages = this.previousMessages[room];
 		if (previousRoomMessages) {
-			var joinArgs = this.nsp.connected[id].joinArgs;
 			if (joinArgs) {
-				delete this.nsp.connected[id].joinArgs;
+		var joinArgs = null;
+		if (this.nsp.connected[id]) {
+			joinArgs = this.nsp.connected[id].joinArgs;
+			delete this.nsp.connected[id].joinArgs;
+		}
 				var messagesAgregate = {
 					type: 2,
 					data: ['message', []],
