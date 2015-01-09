@@ -136,30 +136,27 @@ function adapter(option) {
 			if (previousRoomMessages && joinArgs) {
 				var cachedValue = this.cache.get(room, joinArgs);
 				if (cachedValue) {
-					for (var j = 0; j < cachedValue.length; j++) {
-						this.broadcast(cachedValue[j], {rooms: [id]}, true);
-					}
+					cachedValue.forEach(function(elt) {
+						this.broadcast(elt, {rooms: [id]}, true);
+					});
 				} else {
 					var messagesAgregate = [];
 					var self = this;
+					var message;
 					(function build(i) {
-						if (i == previousRoomMessages.length) {
-							self.cache.set(room, joinArgs, messagesAgregate);
-							for (var j = 0; j < messagesAgregate.length; j++) {
-								self.broadcast(messagesAgregate[j], {rooms: [id]}, true);
-							}
-							return;
-						}
-						var message = previousRoomMessages[i];
-						if (message.data[1].mtime > joinArgs) {
-							self.encoder.encode(message, function(encodedPackets) {
-								messagesAgregate.push(encodedPackets);
-								build(i+1);
+						message = previousRoomMessages[i];
+						if (i < 0 || message.data[1].mtime <= joinArgs) {
+							self.cache.set(room, joinArgs, messagesAgregate.reverse());
+							return messagesAgregate.forEach(function(elt) {
+								this.broadcast(elt, {rooms: [id]}, true);
 							});
 						} else {
-							build(i+1);
+							self.encoder.encode(message, function(encodedPackets) {
+								messagesAgregate.push(encodedPackets);
+								build(i - 1);
+							});
 						}
-					})(0);
+					})(previousRoomMessages.length - 1);
 				}
 			}
 		}
