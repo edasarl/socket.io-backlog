@@ -122,6 +122,9 @@ function adapter(option) {
 					socket.joinArgs = data.mtime;
 					socket.join(data.room);
 				});
+				socket.on('leave', function(data) {
+					socket.leave(data.room);
+				});
 			});
 		} else {
 			var previousRoomMessages = this.previousMessages[room];
