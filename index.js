@@ -129,6 +129,7 @@ function adapter(option) {
 		} else {
 			var previousRoomMessages = this.previousMessages[room];
 			var joinArgs = null;
+			var self = this;
 			if (this.nsp.connected[id]) {
 				joinArgs = this.nsp.connected[id].joinArgs;
 				delete this.nsp.connected[id].joinArgs;
@@ -137,18 +138,17 @@ function adapter(option) {
 				var cachedValue = this.cache.get(room, joinArgs);
 				if (cachedValue) {
 					cachedValue.forEach(function(elt) {
-						this.broadcast(elt, {rooms: [id]}, true);
+						self.broadcast(elt, {rooms: [id]}, true);
 					});
 				} else {
 					var messagesAgregate = [];
-					var self = this;
 					var message;
 					(function build(i) {
 						message = previousRoomMessages[i];
 						if (i < 0 || message.data[1].mtime <= joinArgs) {
 							self.cache.set(room, joinArgs, messagesAgregate.reverse());
 							return messagesAgregate.forEach(function(elt) {
-								this.broadcast(elt, {rooms: [id]}, true);
+								self.broadcast(elt, {rooms: [id]}, true);
 							});
 						} else {
 							self.encoder.encode(message, function(encodedPackets) {
