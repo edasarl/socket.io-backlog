@@ -129,35 +129,32 @@ function adapter(option) {
 		} else {
 			var previousRoomMessages = this.previousMessages[room];
 			var joinArgs = null;
-			var self = this;
 			if (this.nsp.connected[id]) {
 				joinArgs = this.nsp.connected[id].joinArgs;
 				delete this.nsp.connected[id].joinArgs;
 			}
 			if (previousRoomMessages && joinArgs) {
+				var self = this;
 				var cachedValue = this.cache.get(room, joinArgs);
-				if (cachedValue) {
-					cachedValue.forEach(function(elt) {
-						self.broadcast(elt, {rooms: [id]}, true);
-					});
-				} else {
-					var messagesAgregate = [];
+				if (!cachedValue) {
+					cachedValue = [];
 					var message;
 					(function build(i) {
 						message = previousRoomMessages[i];
 						if (i < 0 || message.data[1].mtime <= joinArgs) {
-							self.cache.set(room, joinArgs, messagesAgregate.reverse());
-							return messagesAgregate.forEach(function(elt) {
-								self.broadcast(elt, {rooms: [id]}, true);
-							});
+							cachedValue.reverse();
+							self.cache.set(room, joinArgs, cachedValue);
 						} else {
 							self.encoder.encode(message, function(encodedPackets) {
-								messagesAgregate.push(encodedPackets);
+								cachedValue.push(encodedPackets);
 								build(i - 1);
 							});
 						}
 					})(previousRoomMessages.length - 1);
 				}
+				cachedValue.forEach(function(elt) {
+					self.broadcast(elt, {rooms: [id]}, true);
+				});
 			}
 		}
 		Adapter.prototype.add.call(this, id, room, fn);
