@@ -115,16 +115,14 @@ function adapter(option) {
 
 	Backlog.prototype.add = function(id, room, fn) {
 		if (id == room) {
-			var self = this;
-			setImmediate(function() {
-				var socket = self.nsp.connected[id];
-				socket.on('join', function(data) {
-					socket.joinArgs = data.mtime;
-					socket.join(data.room);
-				});
-				socket.on('leave', function(data) {
-					socket.leave(data.room);
-				});
+			var sockets = this.nsp.sockets;
+			var socket = sockets[sockets.length - 1];
+			socket.on('join', function(data) {
+				socket.joinArgs = data.mtime;
+				socket.join(data.room);
+			});
+			socket.on('leave', function(data) {
+				socket.leave(data.room);
 			});
 		} else {
 			var previousRoomMessages = this.previousMessages[room];
