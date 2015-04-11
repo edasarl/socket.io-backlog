@@ -117,13 +117,10 @@ function adapter(option) {
 		if (id == room) {
 			var sockets = this.nsp.sockets;
 			var socket = sockets[sockets.length - 1];
-			socket.on('join', function(data) {
-				socket.joinArgs = data.mtime;
-				socket.join(data.room);
-			});
-			socket.on('leave', function(data) {
-				socket.leave(data.room);
-			});
+			socket.join = function(room, mtime) {
+				this.joinArgs = mtime;
+				socket.constructor.prototype.join.call(socket, room);
+			};
 		} else {
 			var previousRoomMessages = this.previousMessages[room];
 			var joinArgs = null;
