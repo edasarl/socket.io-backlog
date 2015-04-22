@@ -115,8 +115,7 @@ function adapter(option) {
 
 	Backlog.prototype.add = function(id, room, fn) {
 		if (id == room) {
-			var sockets = this.nsp.sockets;
-			var socket = sockets[sockets.length - 1];
+			var socket = this.nsp.connected[id];
 			socket.join = function(room, mtime) {
 				this.joinArgs = mtime;
 				socket.constructor.prototype.join.call(socket, room);
