@@ -65,6 +65,11 @@ function adapter(option) {
 		var rooms = opts.rooms || [];
 		var except = opts.except || [];
 		var flags = opts.flags || {};
+		var packetOpts = {
+			preEncoded: true,
+			volatile: flags.volatile,
+			compress: flags.compress
+		};
 		var ids = {};
 		var self = this;
 		var socket;
@@ -74,14 +79,13 @@ function adapter(option) {
 				for (var i = 0; i < rooms.length; i++) {
 					var room = self.rooms[rooms[i]];
 					if (!room) continue;
+					room = room.sockets;
 					for (var id in room) {
-						if (room.hasOwnProperty(id)) {
-							if (ids[id] || ~except.indexOf(id)) continue;
-							socket = self.nsp.connected[id];
-							if (socket) {
-								socket.packet(encodedPackets, true, flags.volatile);
-								ids[id] = true;
-							}
+						if (ids[id] || ~except.indexOf(id)) continue;
+						socket = self.nsp.connected[id];
+						if (socket) {
+							socket.packet(encodedPackets, packetOpts);
+							ids[id] = true;
 						}
 					}
 				}
@@ -90,7 +94,7 @@ function adapter(option) {
 					if (self.sids.hasOwnProperty(id)) {
 						if (~except.indexOf(id)) continue;
 						socket = self.nsp.connected[id];
-						if (socket) socket.packet(encodedPackets, true, flags.volatile);
+						if (socket) socket.packet(encodedPackets, packetOpts);
 					}
 				}
 			}
