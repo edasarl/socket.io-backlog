@@ -29,7 +29,7 @@ SimpleCache.prototype.cleanRoom = function(room) {
 	for (var i = 0; i < iMax; i++) {
 		delete data[keys[i]];
 	}
-	this.cache[room].size -= iMax;
+	this.cache[room].size = this.size;
 };
 
 function adapter(option) {
