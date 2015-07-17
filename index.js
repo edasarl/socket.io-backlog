@@ -34,7 +34,6 @@ SimpleCache.prototype.cleanRoom = function(room) {
 
 function adapter(option) {
 	var opt = option || {};
-	var peremption = opt.peremption || 24 * 3600 * 1000;
 	var length = opt.length || 100;
 	var cacheSize = opt.cacheSize || 30;
 
@@ -42,26 +41,15 @@ function adapter(option) {
 		Adapter.call(this, nsp);
 		this.previousMessages = {};
 		this.cache = new SimpleCache(cacheSize);
-		var self = this;
-		function cleanOldMessages() {
-			var previousMessages = self.previousMessages;
-			var timeLimit = (new Date()).getTime() - peremption;
-			for (var room in previousMessages) {
-				var messages = previousMessages[room];
-				var recentMessages = [];
-				var nMessages = messages.length;
-				var iMin = Math.max(0, nMessages - length);
-				for (var i = iMin; i < nMessages; i++) {
-					var message = messages[i];
-					if (message.data[1].mtime > timeLimit) recentMessages.push(message);
-				};
-				previousMessages[room] = recentMessages;
-			}
-			self.cache.reset();
-		}
-		setInterval(cleanOldMessages, peremption / 2);
 	}
 	require('util').inherits(Backlog, Adapter);
+
+	Backlog.prototype.cleanOldMessages = function(room) {
+		var messages = this.previousMessages[room];
+		if (messages.length > 2 * length) {
+			this.previousMessages[room] = messages.slice(-length);
+		}
+	};
 
 	Backlog.prototype.broadcast = function(packet, opts, forget) {
 		var rooms = opts.rooms || [];
@@ -102,8 +90,12 @@ function adapter(option) {
 			for (var i = 0 ; i < rooms.length; i++) {
 				var room = rooms[i];
 				var previousRoomMessages = this.previousMessages[room];
-				if (previousRoomMessages) previousRoomMessages.push(packet);
-				else this.previousMessages[room] = [packet];
+				if (previousRoomMessages) {
+					previousRoomMessages.push(packet);
+					this.cleanOldMessages(room);
+				} else {
+					this.previousMessages[room] = [packet];
+				}
 				this.cache.resetRoom(room);
 			}
 		}
