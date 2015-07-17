@@ -19,6 +19,12 @@ function createApp() {
 	}));
 	io.on("connection", function(socket) {
 		console.log('a user connected', socket.id);
+		socket.on('join', function(data) {
+			socket.backlog(data.mtime).join(data.room);
+		});
+		socket.on('leave', function(data) {
+			socket.leave(data.room);
+		});
 		socket.on("message", function(message) {
 			console.log(socket.id, 'message', message);
 			var now = new Date();
@@ -27,9 +33,6 @@ function createApp() {
 				mtime: now.getTime()
 			};
 			io.to('messages').emit('message', completeMessage);
-		});
-		socket.on("disconnect", function() {
-			console.log("disconnect", socket.id);
 		});
 	});
 	return http;

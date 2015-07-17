@@ -117,28 +117,29 @@ function adapter(option) {
 		if (id == room) {
 			var sockets = this.nsp.sockets;
 			var socket = sockets[sockets.length - 1];
-			socket.join = function(room, mtime) {
-				this.joinArgs = mtime;
-				socket.constructor.prototype.join.call(socket, room);
+			if (!socket.backlog) socket.backlog = function(mtime) {
+				this.backlog.mtime = mtime;
+				return this;
 			};
 		} else {
 			var previousRoomMessages = this.previousMessages[room];
-			var joinArgs = null;
-			if (this.nsp.connected[id]) {
-				joinArgs = this.nsp.connected[id].joinArgs;
-				delete this.nsp.connected[id].joinArgs;
+			var mtime;
+			var socket = this.nsp.connected[id];
+			if (socket) {
+				mtime = socket.backlog && socket.backlog.mtime;
+				if (mtime != null) delete socket.backlog.mtime;
 			}
-			if (previousRoomMessages && joinArgs) {
+			if (previousRoomMessages && mtime) {
 				var self = this;
-				var cachedValue = this.cache.get(room, joinArgs);
+				var cachedValue = this.cache.get(room, mtime);
 				if (!cachedValue) {
 					cachedValue = [];
 					var message;
 					(function build(i) {
 						message = previousRoomMessages[i];
-						if (i < 0 || message.data[1].mtime <= joinArgs) {
+						if (i < 0 || message.data[1].mtime <= mtime) {
 							cachedValue.reverse();
-							self.cache.set(room, joinArgs, cachedValue);
+							self.cache.set(room, mtime, cachedValue);
 						} else {
 							self.encoder.encode(message, function(encodedPackets) {
 								cachedValue.push(encodedPackets);
