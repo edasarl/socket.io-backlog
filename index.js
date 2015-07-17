@@ -24,7 +24,7 @@ SimpleCache.prototype.set = function(room, ts, val) {
 SimpleCache.prototype.cleanRoom = function(room) {
 	var data = this.cache[room].data;
 	var keys = Object.keys(data);
-	keys.sort();
+	keys.sort(function(a,b) {return parseInt(a,10) - parseInt(b,10);});
 	var iMax = keys.length - this.size;
 	for (var i = 0; i < iMax; i++) {
 		delete data[keys[i]];
