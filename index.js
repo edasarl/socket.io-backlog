@@ -120,17 +120,17 @@ function adapter(option) {
 	Backlog.prototype.add = function(id, room, fn) {
 		var socket = this.nsp.connected[id];
 		if (id == room) {
+			if (!socket) {
+				// socket.io without https://github.com/Automattic/socket.io/commit/42540994
+				socket = this.nsp.sockets[this.nsp.sockets.length - 1];
+			}
 			if (!socket.backlog) socket.backlog = function(mtime) {
 				this.backlog.mtime = mtime;
 				return this;
 			};
 		} else {
 			var previousRoomMessages = this.previousMessages[room];
-			var mtime;
-			if (socket) {
-				mtime = socket.backlog && socket.backlog.mtime;
-				if (mtime != null) delete socket.backlog.mtime;
-			}
+			var mtime = socket && socket.backlog && socket.backlog.mtime;
 			if (previousRoomMessages && mtime) {
 				var self = this;
 				var cachedValue = this.cache.get(room, mtime);
