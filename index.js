@@ -21,12 +21,17 @@ SimpleCache.prototype.set = function(room, ts, val) {
 	this.cache[room].data[ts] = val;
 	if (currentSize > 2 * this.size) this.cleanRoom(room);
 };
+
+function compare(a, b) {
+	return parseInt(a, 10) - parseInt(b, 10);
+}
+
 SimpleCache.prototype.cleanRoom = function(room) {
 	var data = this.cache[room].data;
 	var keys = Object.keys(data);
-	keys.sort(function(a,b) {return parseInt(a,10) - parseInt(b,10);});
 	var iMax = keys.length - this.size;
 	for (var i = 0; i < iMax; i++) {
+	keys.sort(compare);
 		delete data[keys[i]];
 	}
 	this.cache[room].size = this.size;
