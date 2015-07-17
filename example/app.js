@@ -14,7 +14,6 @@ function createApp() {
 	var io = socketio(http);
 	io.adapter(backlog({
 		length: 100,
-		peremption: 86400,
 		cacheSize: 2
 	}));
 	io.on("connection", function(socket) {
