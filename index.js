@@ -29,9 +29,8 @@ function compare(a, b) {
 SimpleCache.prototype.cleanRoom = function(room) {
 	var data = this.cache[room].data;
 	var keys = Object.keys(data);
-	var iMax = keys.length - this.size;
-	for (var i = 0; i < iMax; i++) {
 	keys.sort(compare);
+	for (var i = 0; i < keys.length - this.size; i++) {
 		delete data[keys[i]];
 	}
 	this.cache[room].size = this.size;
