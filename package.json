@@ -1,6 +1,6 @@
 {
   "name": "socket.io-backlog",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "repository": {
     "type": "git",
     "url": "git://github.com/edasarl/socket.io-backlog.git"
