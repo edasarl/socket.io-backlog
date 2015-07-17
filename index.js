@@ -25,9 +25,11 @@ SimpleCache.prototype.cleanRoom = function(room) {
 	var data = this.cache[room].data;
 	var keys = Object.keys(data);
 	keys.sort();
-	for (var i = 0; i < keys.length - this.size; i++) {
+	var iMax = keys.length - this.size;
+	for (var i = 0; i < iMax; i++) {
 		delete data[keys[i]];
 	}
+	this.cache[room].size -= iMax;
 };
 
 function adapter(option) {
