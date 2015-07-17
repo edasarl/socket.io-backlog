@@ -15,7 +15,7 @@ In this example, all messages are given a default mtime.
 ```
 io.on('connection', function(socket) {
 	socket.on('join', function(data) {
-		socket.join(data.room, data.mtime);
+		socket.backlog(data.mtime).join(data.room);
 	});
 	socket.on('leave', function(data) {
 		socket.leave(data.room);
