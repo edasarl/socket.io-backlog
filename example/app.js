@@ -19,6 +19,10 @@ function createApp() {
 	}));
 	io.on("connection", function(socket) {
 		console.log('a user connected', socket.id);
+		socket.on('join', function(data) {
+			console.log(data);
+			socket.join(data.room, data.mtime);
+		});
 		socket.on("message", function(message) {
 			console.log(socket.id, 'message', message);
 			var now = new Date();
