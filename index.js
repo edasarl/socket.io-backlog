@@ -27,11 +27,11 @@ function compare(a, b) {
 }
 
 function parseStamp(st) {
+	if (st == null) return st;
 	switch(typeof st) {
 		case "string": return Date.parse(st);
 		case "date": return st.getTime();
 		case "number": return st;
-		case null: return st;
 		default: throw new Error("Unusable stamp " + st);
 	}
 }
