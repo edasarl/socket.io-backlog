@@ -26,6 +26,16 @@ function compare(a, b) {
 	return parseInt(a, 10) - parseInt(b, 10);
 }
 
+function parseStamp(st) {
+	switch(typeof st) {
+		case "string": return Date.parse(st);
+		case "date": return st.getTime();
+		case "number": return st;
+		case null: return st;
+		default: throw new Error("Unusable stamp " + st);
+	}
+}
+
 SimpleCache.prototype.cleanRoom = function(room) {
 	var data = this.cache[room].data;
 	var keys = Object.keys(data);
@@ -40,6 +50,7 @@ function adapter(option) {
 	var opt = option || {};
 	var length = opt.length || 100;
 	var cacheSize = opt.cacheSize || 30;
+	var keyStamp = opt.key || 'mtime';
 
 	function Backlog(nsp) {
 		Adapter.call(this, nsp);
@@ -90,7 +101,7 @@ function adapter(option) {
 			}
 		}
 
-		if (rooms.length && !forget && packet.data[1].mtime) {
+		if (rooms.length && !forget && packet.data[1][keyStamp]) {
 			for (var i = 0 ; i < rooms.length; i++) {
 				var room = rooms[i];
 				var previousRoomMessages = this.previousMessages[room];
@@ -118,24 +129,24 @@ function adapter(option) {
 				// socket.io without https://github.com/Automattic/socket.io/commit/42540994
 				socket = this.nsp.sockets[this.nsp.sockets.length - 1];
 			}
-			if (!socket.backlog) socket.backlog = function(mtime) {
-				this.backlog.mtime = mtime;
+			if (!socket.backlog) socket.backlog = function(mstamp) {
+				this.backlog.mstamp = parseStamp(mstamp);
 				return this;
 			};
 		} else {
 			var previousRoomMessages = this.previousMessages[room];
-			var mtime = socket && socket.backlog && socket.backlog.mtime;
-			if (previousRoomMessages && mtime) {
+			var mstamp = socket && socket.backlog && socket.backlog.mstamp;
+			if (previousRoomMessages && mstamp) {
 				var self = this;
-				var cachedValue = this.cache.get(room, mtime);
+				var cachedValue = this.cache.get(room, mstamp);
 				if (!cachedValue) {
 					cachedValue = [];
 					var message;
 					(function build(i) {
 						message = previousRoomMessages[i];
-						if (i < 0 || message.data[1].mtime <= mtime) {
+						if (i < 0 || parseStamp(message.data[1][keyStamp]) <= mstamp) {
 							cachedValue.reverse();
-							self.cache.set(room, mtime, cachedValue);
+							self.cache.set(room, mstamp, cachedValue);
 						} else {
 							self.encoder.encode(message, function(encodedPackets) {
 								cachedValue.push(encodedPackets);
