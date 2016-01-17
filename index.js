@@ -131,10 +131,6 @@ function adapter(option) {
 	Backlog.prototype.add = function(id, room, fn) {
 		var socket = this.nsp.connected[id];
 		if (id == room) {
-			if (!socket) {
-				// socket.io without https://github.com/Automattic/socket.io/commit/42540994
-				socket = this.nsp.sockets[this.nsp.sockets.length - 1];
-			}
 			if (!socket.backlog) socket.backlog = function(mstamp) {
 				this.backlog.mstamp = parseStamp(mstamp);
 				return this;
