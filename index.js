@@ -128,7 +128,14 @@ function adapter(option) {
 		}
 	};
 
-	Backlog.prototype.add = function(id, room, fn) {
+	Backlog.prototype.addAll = function(id, rooms, fn) {
+		for (var i=0; i < rooms.length; i++) {
+			this.backlogJoin(id, rooms[i]);
+		}
+		Adapter.prototype.addAll.call(this, id, rooms, fn);
+	};
+
+	Backlog.prototype.backlogJoin = function(id, room) {
 		var socket = this.nsp.connected[id];
 		if (id == room) {
 			if (!socket.backlog) socket.backlog = function(mstamp) {
@@ -162,7 +169,6 @@ function adapter(option) {
 				});
 			}
 		}
-		Adapter.prototype.add.call(this, id, room, fn);
 	};
 	return Backlog;
 }
