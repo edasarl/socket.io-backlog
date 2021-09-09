@@ -1,19 +1,19 @@
-var express = require("express");
-var socketio = require('socket.io');
-var backlog = require("../");
+const express = require("express");
+const ioServer = require('socket.io');
+const Backlog = require("../");
 
 createApp().listen(3000, function() {
 	console.log("http://localhost:3000");
 });
 
 function createApp() {
-	var app = express();
-	var http = require("http").Server(app);
+	const app = express();
+	const http = require("http").Server(app);
 	app.use(express.static(__dirname));
 
-	var io = socketio(http);
-	io.adapter(backlog({
-		length: 100,
+	const io = ioServer(http);
+	io.adapter(new Backlog({
+		logSize: 100,
 		cacheSize: 2
 	}));
 	io.on("connection", function(socket) {
@@ -26,8 +26,8 @@ function createApp() {
 		});
 		socket.on("message", function(message) {
 			console.log(socket.id, 'message', message);
-			var now = new Date();
-			var completeMessage = {
+			const now = new Date();
+			const completeMessage = {
 				text: message,
 				mtime: now.getTime()
 			};
