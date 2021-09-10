@@ -1,7 +1,8 @@
 const { Adapter } = require("socket.io-adapter");
 const SimpleCache = require('./src/cache');
 
-module.exports = class Backlog extends Adapter {
+module.exports = createBacklog;
+class Backlog extends Adapter {
 	constructor(nsp, { cacheSize = 30, keyStamp = 'mtime', logSize = 100 } = {}) {
 		super(nsp);
 		this.previousMessages = {};
@@ -16,45 +17,9 @@ module.exports = class Backlog extends Adapter {
 		}
 	}
 
-	broadcast(packet, { rooms = [], except = [], flags = {} }, forget) {
-		const packetOpts = {
-			preEncoded: true,
-			volatile: flags.volatile,
-			compress: flags.compress
-		};
-		const ids = {};
-		const self = this;
-		let socket;
-
-		function sendEncodedPackets(encodedPackets) {
-			if (rooms.length) {
-				for (const key of rooms) {
-					const room = self.rooms[key];
-					if (!room) continue;
-					const sockets = room.sockets;
-					for (const id in sockets) {
-						if (Object.prototype.hasOwnProperty.call(sockets, id)) {
-							if (ids[id] || except.indexOf(id) !== -1) continue;
-							socket = self.nsp.connected[id];
-							if (socket) {
-								socket.packet(encodedPackets, packetOpts);
-								ids[id] = true;
-							}
-						}
-					}
-				}
-			} else {
-				for (const id in self.sids) {
-					if (Object.prototype.hasOwnProperty.call(self.sids, id)) {
-						if (except.indexOf(id) === -1) continue;
-						socket = self.nsp.connected[id];
-						if (socket) socket.packet(encodedPackets, packetOpts);
-					}
-				}
-			}
-		}
-
-		if (rooms.length && !forget && packet.data[1][this.keyStamp]) {
+	broadcast(packet, opts, forget) {
+		const { rooms } = opts;
+		if (rooms.size && !forget && packet.data[1][this.keyStamp]) {
 			for (const key of rooms) {
 				const previousRoomMessages = this.previousMessages[key];
 				if (previousRoomMessages) {
@@ -66,12 +31,7 @@ module.exports = class Backlog extends Adapter {
 				this.cache.resetRoom(key);
 			}
 		}
-		if (forget) {
-			sendEncodedPackets(packet);
-		} else {
-			packet.nsp = this.nsp.name;
-			this.encoder.encode(packet, sendEncodedPackets);
-		}
+		return super.broadcast(packet, opts);
 	}
 
 	addAll(id, rooms, fn) {
@@ -82,7 +42,7 @@ module.exports = class Backlog extends Adapter {
 	}
 
 	backlogJoin(id, room) {
-		const socket = this.nsp.connected[id];
+		const socket = this.nsp.sockets.get(id);
 		if (id == room) {
 			if (!socket.backlog) socket.backlog = function (mstamp) {
 				this.backlog.mstamp = parseStamp(mstamp);
@@ -95,28 +55,20 @@ module.exports = class Backlog extends Adapter {
 				let cachedValue = this.cache.get(room, mstamp);
 				if (!cachedValue) {
 					cachedValue = [];
-					let message;
-					const build = (i) => {
-						message = previousRoomMessages[i];
-						if (i < 0 || parseStamp(message.data[1][this.keyStamp]) <= mstamp) {
-							cachedValue.reverse();
+					for (const msg of previousRoomMessages) {
+						if (parseStamp(msg.data[1][this.keyStamp]) <= mstamp) {
 							this.cache.set(room, mstamp, cachedValue);
+							break;
 						} else {
-							this.encoder.encode(message, function (encodedPackets) {
-								cachedValue.push(encodedPackets);
-								build(i - 1);
-							});
+							cachedValue.push(msg);
+							socket.packet(msg);
 						}
-					};
-					build(previousRoomMessages.length - 1);
-				}
-				for (const elt of cachedValue) {
-					this.broadcast(elt, { rooms: [id] }, true);
+					}
 				}
 			}
 		}
 	}
-};
+}
 
 function parseStamp(st) {
 	if (st == null) return st;
@@ -128,3 +80,8 @@ function parseStamp(st) {
 	}
 }
 
+function createBacklog(opts) {
+	return function (nsp) {
+		return new Backlog(nsp, opts);
+	};
+}

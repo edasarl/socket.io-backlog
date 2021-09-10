@@ -1,6 +1,6 @@
 const express = require("express");
-const ioServer = require('socket.io');
-const Backlog = require("../");
+const IoServer = require('socket.io');
+const backlog = require("../");
 
 createApp().listen(3000, function() {
 	console.log("http://localhost:3000");
@@ -11,14 +11,15 @@ function createApp() {
 	const http = require("http").Server(app);
 	app.use(express.static(__dirname));
 
-	const io = ioServer(http);
-	io.adapter(new Backlog({
+	const io = IoServer(http);
+	io.adapter(backlog({
 		logSize: 100,
 		cacheSize: 2
 	}));
 	io.on("connection", function(socket) {
 		console.log('a user connected', socket.id);
-		socket.on('join', function(data) {
+		socket.on('join', function (data) {
+			console.log('user joins room', data);
 			socket.backlog(data.mtime).join(data.room);
 		});
 		socket.on('leave', function(data) {
