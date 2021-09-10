@@ -24,7 +24,7 @@
 				var now = new Date();
 				chat.emit('join', {
 					room: 'messages',
-					mtime: now.getTime() - 1000000
+					mtime: now.getTime() - 10000
 				});
 			});
 			chat.on("message", function(data) {

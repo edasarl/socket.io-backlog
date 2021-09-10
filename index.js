@@ -55,16 +55,17 @@ class Backlog extends Adapter {
 				let cachedValue = this.cache.get(room, mstamp);
 				if (!cachedValue) {
 					cachedValue = [];
-					for (const msg of previousRoomMessages) {
-						if (parseStamp(msg.data[1][this.keyStamp]) <= mstamp) {
+					for (let i = previousRoomMessages.length - 1; i >= 0; i--) {
+						const msg = previousRoomMessages[i];
+						if (parseStamp(msg.data[1][this.keyStamp]) <= mstamp) { // FIXME mstamp comes from the client socket ! it is hackable so easily !
 							this.cache.set(room, mstamp, cachedValue);
 							break;
 						} else {
-							cachedValue.push(msg);
-							socket.packet(msg);
+							cachedValue.unshift(msg);
 						}
 					}
 				}
+				for (const msg of cachedValue) socket.packet(msg);
 			}
 		}
 	}

@@ -10,6 +10,7 @@ module.exports = class SimpleCache {
 		delete this.cache[room];
 	}
 	get(room, ts) {
+		// FIXME ts is at high resolution, we want at least a 30 seconds window
 		return this.cache[room] ? this.cache[room].data[ts] : undefined;
 	}
 	set(room, ts, val) {
