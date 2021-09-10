@@ -5,7 +5,7 @@
     "type": "git",
     "url": "git://github.com/edasarl/socket.io-backlog.git"
   },
-  "description": "socket.io adapter to catchup previously sent messages",
+  "description": "socket.io adapter to store and send previous messages upon connection",
   "main": "src/backlog.js",
   "scripts": {
     "test": "mocha"
