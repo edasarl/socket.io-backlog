@@ -1,6 +1,6 @@
 const express = require("express");
 const IoServer = require('socket.io');
-const backlog = require("../");
+const backlog = require("../src/backlog");
 
 createApp().listen(3000, function() {
 	console.log("http://localhost:3000");
