@@ -10,6 +10,9 @@
   "scripts": {
     "test": "mocha"
   },
+  "mocha": {
+    "exit": true
+  },
   "contributors": [
     {
       "name": "Jérémy Lal",
